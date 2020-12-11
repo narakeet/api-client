@@ -1,14 +1,14 @@
 {
   "name": "@narakeet/api-client",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Command line API client for the Narakeet vidoe build API",
   "bin": {
     "narakeet-api-client": "./bin/cmd.js"
   },
   "files": [
     "src",
-	"bin",
-	"*.txt"
+    "bin",
+    "*.txt"
   ],
   "scripts": {
     "pretest": "eslint src *.js",
