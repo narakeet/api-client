@@ -58,6 +58,11 @@ module.exports = function RequestProcessor (restApi) {
 			};
 		};
 	self.run = async function ({apiUrl, apiKey, source, repository, repositoryType, token, sha, resultFile, verbose}) {
+		if (verbose) {
+			console.log({
+				apiUrl, apiKey, source, repository, repositoryType, token, sha, resultFile
+			});
+		}
 		const event = {
 				source,
 				repository,
@@ -69,6 +74,7 @@ module.exports = function RequestProcessor (restApi) {
 			logger = verbose && console,
 			task = await startTask(api, apiKey, event, logger),
 			taskResponse = await pollForFinished(task.statusUrl, POLLING_INTERVAL, logger);
+
 		if (taskResponse.succeeded) {
 			return await saveResults(task, taskResponse, resultFile, logger);
 		} else {
