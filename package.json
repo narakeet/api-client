@@ -1,0 +1,37 @@
+{
+  "name": "@narakeet/api-client",
+  "version": "1.0.0",
+  "description": "Command line API client for the Narakeet vidoe build API",
+  "main": "index.js",
+  "files": [
+    "*.js",
+    "src"
+  ],
+  "scripts": {
+    "pretest": "eslint src *.js",
+    "test": "node test/integration-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/narakeet/api-client.git"
+  },
+  "keywords": [
+    "videopuppet",
+    "video",
+    "narakeet"
+  ],
+  "author": "Gojko Adzic <gojko@gojko.com> (https://gojko.net/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/narakeet/api-client/issues"
+  },
+  "homepage": "https://github.com/narakeet/api-client#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.2"
+  },
+  "devDependencies": {
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "eslint": "^6.8.0"
+  }
+}
