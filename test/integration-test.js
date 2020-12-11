@@ -12,7 +12,9 @@ const axios = require('axios'),
 		repository: process.env['GITHUB_REPOSITORY'],
 		token: process.env['GITHUB_TOKEN'],
 		sha: process.env['GITHUB_SHA'],
-		resultFile: process.env['RESULT_FILE']
+		resultFile: process.env['RESULT_FILE'],
+		repositoryType: 'github',
+		verbose: true
 	};
 
 console.log('params', params);

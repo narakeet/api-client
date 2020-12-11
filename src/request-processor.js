@@ -6,7 +6,7 @@ const pause = require('./pause'),
 	DEFAULT_URL = 'https://api.narakeet.com/video/build';
 module.exports = function RequestProcessor (restApi) {
 	const self = this,
-		startTask = async function (apiUrl, apiKey, event) {
+		startTask = async function (apiUrl, apiKey, event, logger) {
 			try {
 				const result = await restApi.postJSON(
 					apiUrl,
@@ -15,8 +15,10 @@ module.exports = function RequestProcessor (restApi) {
 						'x-api-key': apiKey
 					}
 				);
-				console.log('got task id', result.taskId);
-				console.log('got status URL', result.statusUrl);
+				if (logger) {
+					logger.log('got task id', result.taskId);
+					logger.log('got status URL', result.statusUrl);
+				}
 				return result;
 			} catch (e) {
 				if (e.error) {
@@ -25,11 +27,13 @@ module.exports = function RequestProcessor (restApi) {
 				throw e;
 			}
 		},
-		pollForFinished = async function (statusUrl, interval) {
+		pollForFinished = async function (statusUrl, interval, logger) {
 			try {
 				await pause(interval);
 				const result = await restApi.getJSON(statusUrl);
-				console.log(result);
+				if (logger) {
+					logger.log(result);
+				}
 				if (result && result.finished) {
 					return result;
 				} else {
@@ -40,31 +44,33 @@ module.exports = function RequestProcessor (restApi) {
 				return pollForFinished(statusUrl, interval);
 			}
 		},
-		saveResults = async function (task, taskResponse, resultFile) {
+		saveResults = async function (task, taskResponse, resultFile, logger) {
 			const videoUrl = taskResponse.result,
 				remoteName = path.basename(url.parse(videoUrl).pathname),
 				filename = resultFile || remoteName;
-			console.log('downloading from', taskResponse.result, 'to', filename);
+			if (logger) {
+				logger.log('downloading from', taskResponse.result, 'to', filename);
+			}
 			await restApi.downloadToFile(taskResponse.result, filename);
 			return {
 				videoUrl: taskResponse.result,
 				videoFile: filename
 			};
 		};
-	self.run = async function (params) {
-		const {apiUrl, apiKey, source, repository, token, sha, resultFile} = params,
-			event = {
+	self.run = async function ({apiUrl, apiKey, source, repository, repositoryType, token, sha, resultFile, verbose}) {
+		const event = {
 				source,
 				repository,
 				token,
-				repositoryType: 'github',
+				repositoryType,
 				sha
 			},
 			api = apiUrl || DEFAULT_URL,
-			task = await startTask(api, apiKey, event),
-			taskResponse = await pollForFinished(task.statusUrl, POLLING_INTERVAL);
+			logger = verbose && console,
+			task = await startTask(api, apiKey, event, logger),
+			taskResponse = await pollForFinished(task.statusUrl, POLLING_INTERVAL, logger);
 		if (taskResponse.succeeded) {
-			return await saveResults(task, taskResponse, resultFile);
+			return await saveResults(task, taskResponse, resultFile, logger);
 		} else {
 			throw new Error(JSON.stringify(taskResponse));
 		}
