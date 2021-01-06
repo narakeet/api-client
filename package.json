@@ -30,10 +30,10 @@
   },
   "homepage": "https://github.com/narakeet/api-client#readme",
   "dependencies": {
-    "minimist": "^1.2.5",
-    "axios": "^0.19.2"
+    "minimist": "^1.2.5"
   },
   "devDependencies": {
+    "axios": "^0.21.1",
     "dotenv": "^8.2.0",
     "eslint": "^6.8.0"
   }
