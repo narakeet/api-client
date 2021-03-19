@@ -2,9 +2,8 @@
 const pause = require('./pause'),
 	path = require('path'),
 	url = require('url'),
-	POLLING_INTERVAL = 5000,
 	DEFAULT_URL = 'https://api.narakeet.com/video/build';
-module.exports = function RequestProcessor (restApi) {
+module.exports = function RequestProcessor (restApi, taskLogger = console, pollingInterval = 5000) {
 	const self = this,
 		startTask = async function (apiUrl, apiKey, event, logger) {
 			try {
@@ -71,9 +70,9 @@ module.exports = function RequestProcessor (restApi) {
 				sha
 			},
 			api = apiUrl || DEFAULT_URL,
-			logger = verbose && console,
+			logger = verbose && taskLogger,
 			task = await startTask(api, apiKey, event, logger),
-			taskResponse = await pollForFinished(task.statusUrl, POLLING_INTERVAL, logger);
+			taskResponse = await pollForFinished(task.statusUrl, pollingInterval, logger);
 
 		if (taskResponse.succeeded) {
 			return await saveResults(task, taskResponse, resultFile, logger);

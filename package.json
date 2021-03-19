@@ -12,11 +12,20 @@
   ],
   "scripts": {
     "pretest": "eslint src *.js",
-    "test": "node test/integration-test.js"
+	"test": "jest --testPathIgnorePatterns=integration",
+    "test:integration": "jest --testPathPattern=integration"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/narakeet/api-client.git"
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>/src/",
+      "<rootDir>/tests/"
+    ],
+    "testEnvironment": "node",
+	"globalSetup": "./tests/init.js"
   },
   "keywords": [
     "videopuppet",
@@ -35,6 +44,7 @@
   "devDependencies": {
     "axios": "^0.21.1",
     "dotenv": "^8.2.0",
-    "eslint": "^6.8.0"
+    "eslint": "^6.8.0",
+    "jest": "^26.6.3"
   }
 }
