@@ -24,4 +24,4 @@ Optionally, to use the Dev api instead of the production one, also add:
 API_URL=https://testapi.narakeet.com/video/build
 ```
 
-You can then run `npm t` to execute an integration test.
+You can then run `npm run test:integration` to execute an integration test.
