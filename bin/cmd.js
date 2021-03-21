@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 'use strict';
-const path = require('path'),
+const DEFAULT_URL = 'https://api.narakeet.com',
+	path = require('path'),
 	fs = require('fs'),
 	axios = require('axios'),
 	AxiosRestApi = require('../src/axios-rest-api'),
 	version = require(path.join(__dirname, '..', 'package.json')).version,
 	minimist = require('minimist'),
+	nullLogger = require('../src/null-logger'),
 	RequestProcessor = require('../src/request-processor'),
 	readArgs = function () {
 		return minimist(process.argv.slice(2), {
@@ -23,14 +25,18 @@ const path = require('path'),
 			boolean: ['verbose'],
 			default: {
 				'repository-type': 'zip-url',
+				'api-url': DEFAULT_URL
 			}
 		});
 	},
+
 	main = async function () {
 		const args = readArgs(),
-			restApi = new AxiosRestApi(axios),
-			requestProcessor = new RequestProcessor(restApi);
-
+			{verbose} = args,
+			logger = verbose ? console : nullLogger,
+			restApi = new AxiosRestApi(axios, logger),
+			pollingInterval = 5000,
+			requestProcessor = new RequestProcessor({restApi, logger, pollingInterval, apiEndpoint: args.apiUrl});
 		if (args.version) {
 			console.log(version);
 			return;
@@ -43,7 +49,11 @@ const path = require('path'),
 		try {
 			await requestProcessor.run(args);
 		} catch (e) {
-			console.error(e);
+			if (typeof e === 'string') {
+				console.error(e);
+			} else {
+				console.error(JSON.stringify(e));
+			}
 			process.exit(1);
 		}
 	};

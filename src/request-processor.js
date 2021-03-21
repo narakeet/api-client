@@ -2,81 +2,99 @@
 const pause = require('./pause'),
 	path = require('path'),
 	url = require('url'),
-	DEFAULT_URL = 'https://api.narakeet.com/video/build';
-module.exports = function RequestProcessor (restApi, taskLogger = console, pollingInterval = 5000) {
+	zipDir = require('../src/zip-dir'),
+	fs = require('fs');
+module.exports = function RequestProcessor ({restApi, logger, pollingInterval, apiEndpoint}) {
+	if (!restApi || !logger || !pollingInterval || !apiEndpoint) {
+		throw new Error('invalid-args');
+	}
 	const self = this,
-		startTask = async function (apiUrl, apiKey, event, logger) {
-			try {
-				const result = await restApi.postJSON(
-					apiUrl,
-					event,
-					{
-						'x-api-key': apiKey
-					}
-				);
-				if (logger) {
-					logger.log('got task id', result.taskId);
-					logger.log('got status URL', result.statusUrl);
+		startTask = async function (apiKey, event) {
+			const result = await restApi.postJSON(
+				apiEndpoint + '/video/build',
+				event,
+				{
+					'x-api-key': apiKey
 				}
-				return result;
-			} catch (e) {
-				if (e.error) {
-					throw new Error(e.error);
-				}
-				throw e;
-			}
+			);
+			logger.log('got task id', result.taskId);
+			logger.log('got status URL', result.statusUrl);
+			return result;
 		},
-		pollForFinished = async function (statusUrl, interval, logger) {
+		pollForFinished = async function (statusUrl, interval) {
 			try {
 				await pause(interval);
 				const result = await restApi.getJSON(statusUrl);
-				if (logger) {
-					logger.log(result);
-				}
+				logger.log(result);
 				if (result && result.finished) {
 					return result;
 				} else {
 					return pollForFinished(statusUrl, interval);
 				}
 			} catch (e) {
-				console.error('network request failed', e);
+				logger.error('network request failed', e);
 				return pollForFinished(statusUrl, interval);
 			}
 		},
-		saveResults = async function (task, taskResponse, resultFile, logger) {
+		saveResults = async function (task, taskResponse, resultFile) {
 			const videoUrl = taskResponse.result,
 				remoteName = path.basename(url.parse(videoUrl).pathname),
 				filename = resultFile || remoteName;
-			if (logger) {
-				logger.log('downloading from', taskResponse.result, 'to', filename);
-			}
+			logger.log('downloading from', taskResponse.result, 'to', filename);
 			await restApi.downloadToFile(taskResponse.result, filename);
 			return {
 				videoUrl: taskResponse.result,
 				videoFile: filename
 			};
+		},
+		getRequestForLocalZip = async ({apiKey, source, repository}) => {
+			logger.log('getting upload token', {apiKey});
+			const uploadToken = await restApi.getJSON(apiEndpoint + '/video/upload-request/zip', {'x-api-key': apiKey});
+			logger.log('received upload token', uploadToken);
+			logger.log('uploading file');
+			await restApi.putFile(uploadToken.url, repository, {'Content-Type': uploadToken.contentType});
+			return {
+				repositoryType: uploadToken.repositoryType,
+				repository: uploadToken.repository,
+				source
+			};
+		},
+		getCompilationRequest = async function ({source, repository, token, repositoryType, sha, apiKey}) {
+			if (repositoryType === 'github') {
+				return {source, repository, repositoryType, token, sha};
+			} else if (repositoryType === 'zip-url') {
+				return {source, repository, repositoryType};
+			} else if (repositoryType === 'local-zip') {
+				return getRequestForLocalZip({apiKey, source, repository});
+			} else if (repositoryType === 'local-dir') {
+				const localZip = await zipDir(repository),
+					request = await getRequestForLocalZip({apiKey, source, repository: localZip});
+				await fs.promises.unlink(localZip);
+				return request;
+			} else {
+				throw `unsupported repository type ${repositoryType}`;
+			}
 		};
-	self.run = async function ({apiUrl, apiKey, source, repository, repositoryType, token, sha, resultFile, verbose}) {
-		if (verbose) {
-			console.log({
-				apiUrl, apiKey, source, repository, repositoryType, token, sha, resultFile
-			});
-		}
-		const event = {
+	self.run = async function ({apiKey, source, repository, repositoryType, token, sha, resultFile}) {
+		logger.log('executing', {
+			apiEndpoint, apiKey, source, repository, repositoryType, token, sha, resultFile
+		});
+		const event = await getCompilationRequest({
 				source,
 				repository,
 				token,
 				repositoryType,
-				sha
-			},
-			api = apiUrl || DEFAULT_URL,
-			logger = verbose && taskLogger,
-			task = await startTask(api, apiKey, event, logger),
-			taskResponse = await pollForFinished(task.statusUrl, pollingInterval, logger);
-
+				sha,
+				apiKey
+			}),
+			task = await startTask(apiKey, event),
+			taskResponse = await pollForFinished(task.statusUrl, pollingInterval);
 		if (taskResponse.succeeded) {
-			return await saveResults(task, taskResponse, resultFile, logger);
+			return await saveResults(task, taskResponse, resultFile);
 		} else {
+			if (taskResponse.message) {
+				throw taskResponse.message;
+			}
 			throw new Error(JSON.stringify(taskResponse));
 		}
 	};

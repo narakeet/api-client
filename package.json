@@ -1,6 +1,6 @@
 {
   "name": "@narakeet/api-client",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Command line API client for the Narakeet vidoe build API",
   "bin": {
     "narakeet-api-client": "./bin/cmd.js"
@@ -11,8 +11,8 @@
     "*.txt"
   ],
   "scripts": {
-    "pretest": "eslint src *.js",
-	"test": "jest --testPathIgnorePatterns=integration",
+    "pretest": "eslint src tests *.js",
+    "test": "jest --testPathIgnorePatterns=integration",
     "test:integration": "jest --testPathPattern=integration"
   },
   "repository": {
@@ -25,7 +25,7 @@
       "<rootDir>/tests/"
     ],
     "testEnvironment": "node",
-	"globalSetup": "./tests/init.js"
+    "globalSetup": "./tests/init.js"
   },
   "keywords": [
     "videopuppet",
@@ -39,10 +39,11 @@
   },
   "homepage": "https://github.com/narakeet/api-client#readme",
   "dependencies": {
-    "minimist": "^1.2.5"
+    "minimist": "^1.2.5",
+    "archiver": "^5.3.0",
+    "axios": "^0.21.1"
   },
   "devDependencies": {
-    "axios": "^0.21.1",
     "dotenv": "^8.2.0",
     "eslint": "^6.8.0",
     "jest": "^26.6.3"

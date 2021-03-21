@@ -21,7 +21,7 @@ SHA=
 Optionally, to use the Dev api instead of the production one, also add:
 
 ```
-API_URL=https://testapi.narakeet.com/video/build
+API_URL=https://testapi.narakeet.com
 ```
 
 You can then run `npm run test:integration` to execute an integration test.
