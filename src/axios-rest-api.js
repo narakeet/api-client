@@ -8,6 +8,9 @@ module.exports = function AxiosRestApi(axios, logger) {
 				if (typeof error.response.data === 'string') {
 					throw error.response.data;
 				}
+				if (typeof error.response.data === 'object' && typeof error.response.data.error === 'string') {
+					throw error.response.data.error;
+				}
 				if (typeof error.response.data === 'object' && typeof error.response.data.message === 'string') {
 					throw error.response.data.message;
 				}
