@@ -1,6 +1,7 @@
 Narakeet API client
 
   Command line client that allows building videos using the Narakeet API.
+  See https://www.narakeet.com/docs/automating/ for more information.
 
 Installation:
 
@@ -108,4 +109,5 @@ Examples:
 
     narakeet-api-client --api-key $API_KEY \
      --repository $URL \
-     --source source.md
+     --source source.md \
+     --repository-type zip-url
