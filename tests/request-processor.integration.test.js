@@ -90,7 +90,7 @@ describe('request processor integration tests', () => {
 					resultFile,
 					repositoryType: 'zip-url',
 				};
-				await expect(requestProcessor.run(params)).rejects.toEqual('Forbidden');
+				await expect(requestProcessor.run(params)).rejects.toEqual('zip-url repository must start with https://');
 			});
 
 		});
