@@ -1,6 +1,6 @@
 {
   "name": "@narakeet/api-client",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Command line API client for the Narakeet vidoe build API",
   "bin": {
     "narakeet-api-client": "./bin/cmd.js"
