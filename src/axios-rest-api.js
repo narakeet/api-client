@@ -45,7 +45,8 @@ module.exports = function AxiosRestApi(axios, logger) {
 		try {
 			const stat = await fs.promises.stat(filePath),
 				headers = Object.assign({'Content-Length': stat.size}, additionalHeaders),
-				response = await axios.put(url, fs.createReadStream(filePath), {headers});
+				maxBodyLength = stat.size + 2000,
+				response = await axios.put(url, fs.createReadStream(filePath), {headers, maxBodyLength});
 			return response.data;
 		} catch (error) {
 			throw extractResponseError(error);

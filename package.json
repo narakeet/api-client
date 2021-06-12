@@ -12,8 +12,9 @@
   ],
   "scripts": {
     "pretest": "eslint src tests *.js",
-    "test": "jest --testPathIgnorePatterns=integration",
-    "test:integration": "jest --testPathPattern=integration"
+    "test": "jest",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:unit": "--testPathIgnorePatterns=integration"
   },
   "repository": {
     "type": "git",
