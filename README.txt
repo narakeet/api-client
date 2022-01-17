@@ -19,24 +19,39 @@ Usage:
 Mandatory arguments:
 
 * --api-key:         Your Narakeet API key
-* --source:          Narakeet script path inside the repository
-* --repository:      Narakeet project location
+
+Additional arguments for video projects:
+
+* --source:          (Required) Narakeet script path inside the repository
+* --repository:      (Required) Narakeet project location
                      See "Repository types" below for more information
-* --repository-type: Project location type (eg github or local-dir)
+* --repository-type: (Required) Project location type (eg github or local-dir)
                      See "Repository types" below for more information
-
-Optional arguments:
-
-* --output:          File name for the resulting video. Default: result.mp4
-* --verbose:         Print troubleshooting information when working
-* --api-url:         override the API url, useful for testing
-
 Additional arguments for GitHub repositories:
 
 * --github-token:    (Required) repository access token
 * --github-sha:      (Optional) source commit SHA
                      useful for building from a specific tag or version
                      if not specified, the current head commit will be used
+
+Additional arguments for audio (text-to-speech) projects:
+
+* --script:          input text for speech synthesis, required if script-file is not specified
+* --script-file:     (Optional) file containing the input script, relative to current directory
+* --output-type:     (Optional) output file type. "wav", "m4a" or "mp3". 
+                     Defaults to m4a
+* --voice:           (Optional) default voice for text-to-speech synthesis. See
+                     https://www.narakeet.com/languages/ for available options
+
+Optional arguments:
+
+* --output:          File name for the resulting file. 
+                     Default: result.mp4 for videos, or result.<type> for audio
+* --project-type:    "video" or "audio". selects slower video build or faster
+                     text-to-speech build. Default: video
+* --verbose:         Print troubleshooting information when working
+* --api-url:         override the API url, useful for testing
+
 
 Repository types:
 
@@ -83,21 +98,21 @@ Repository types:
 
 Examples:
 
-  Build from a local directory:
+  Build a video from a local directory:
 
     narakeet-api-client --api-key $API_KEY \
      --source source.md \
      --repository my-video-project \
      --repository-type local-dir
 
-  Build from a local zip:
+  Build a video from a local zip:
 
     narakeet-api-client --api-key $API_KEY \
      --source source.md \
      --repository my-video-project.zip \
      --repository-type local-zip
 
-  Build from a git repo:
+  Build a video from a git repo:
 
     narakeet-api-client --api-key $API_KEY \
      --source hello-world/script/source.md \
@@ -105,9 +120,27 @@ Examples:
      --repository-type github \
      --github-token $GITHUB_TOKEN
 
-  Build from a URL:
+  Build a video from a ZIP published to a URL:
 
     narakeet-api-client --api-key $API_KEY \
      --repository $URL \
      --source source.md \
      --repository-type zip-url
+
+  Build an audio MP3 from a local text file:
+
+    narakeet-api-client --api-key $API_KEY \
+     --project-type audio \
+     --source script.txt \
+     --output-type mp3
+
+  Build an audio WAV from a local text file, using the Rodney
+  voice, saving to my-script.wav
+
+    narakeet-api-client --api-key $API_KEY \
+     --project-type audio \
+     --source script.txt \
+     --output-type wav \
+     --voice rodney \
+     --output my-script.wav
+

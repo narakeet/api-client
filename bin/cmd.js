@@ -19,13 +19,16 @@ const DEFAULT_URL = 'https://api.narakeet.com',
 				'token': 'github-token',
 				'sha': 'github-sha',
 				'resultFile': 'output',
-				'apiKey': 'api-key'
+				'apiKey': 'api-key',
+				'outputType': 'output-type'
 			},
-			string: ['api-key', 'repository', 'repository-type', 'github-token', 'github-sha', 'output', 'api-url'],
+			string: ['api-key', 'repository', 'repository-type', 'github-token', 'github-sha', 'output', 'api-url', 'output-type', 'project-type', 'voice'],
 			boolean: ['verbose'],
 			default: {
 				'repository-type': 'zip-url',
-				'api-url': DEFAULT_URL
+				'api-url': DEFAULT_URL,
+				'project-type': 'video',
+				'output-type': 'm4a'
 			}
 		});
 	},

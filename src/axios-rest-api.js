@@ -1,8 +1,7 @@
 'use strict';
 const fs = require('fs');
 module.exports = function AxiosRestApi(axios, logger) {
-	const self = this,
-		extractResponseError = (error) => {
+	const extractResponseError = (error) => {
 			if (error.response) {
 				logger.error(error.response);
 				if (typeof error.response.data === 'string') {
@@ -18,46 +17,58 @@ module.exports = function AxiosRestApi(axios, logger) {
 			}
 			logger.error(error);
 			throw error;
-		};
-
-	self.downloadToFile = async function (fileUrl, filePath) {
-		const writer = fs.createWriteStream(filePath),
-			response = await axios({
-				method: 'get',
-				url: fileUrl,
-				responseType: 'stream'
+		},
+		sendFile = async function (url, filePath, additionalHeaders, operation) {
+			try {
+				const stat = await fs.promises.stat(filePath),
+					headers = Object.assign({'Content-Length': stat.size}, additionalHeaders),
+					maxBodyLength = stat.size + 2000,
+					response = await axios[operation](url, fs.createReadStream(filePath), {headers, maxBodyLength});
+				return response.data;
+			} catch (error) {
+				throw extractResponseError(error);
+			}
+		},
+		downloadToFile = async function (fileUrl, filePath) {
+			const writer = fs.createWriteStream(filePath),
+				response = await axios({
+					method: 'get',
+					url: fileUrl,
+					responseType: 'stream'
+				});
+			response.data.pipe(writer);
+			return new Promise((resolve, reject) => {
+				writer.on('finish', resolve);
+				writer.on('error', reject);
 			});
-		response.data.pipe(writer);
-		return new Promise((resolve, reject) => {
-			writer.on('finish', resolve);
-			writer.on('error', reject);
-		});
-	};
-	self.postJSON = async function (url, data, headers) {
-		try {
-			const response = await axios.post(url, data, {headers});
-			return response.data;
-		} catch (error) {
-			throw extractResponseError(error);
-		}
-	};
-	self.putFile = async function (url, filePath, additionalHeaders) {
-		try {
-			const stat = await fs.promises.stat(filePath),
-				headers = Object.assign({'Content-Length': stat.size}, additionalHeaders),
-				maxBodyLength = stat.size + 2000,
-				response = await axios.put(url, fs.createReadStream(filePath), {headers, maxBodyLength});
-			return response.data;
-		} catch (error) {
-			throw extractResponseError(error);
-		}
-	};
-	self.getJSON = async function (url, headers) {
-		try {
-			const response = await axios.get(url, {headers});
-			return response.data;
-		} catch (error) {
-			throw extractResponseError(error);
-		}
-	};
+		},
+		postJSON = async function (url, data, headers) {
+			try {
+				const response = await axios.post(url, data, {headers});
+				return response.data;
+			} catch (error) {
+				throw extractResponseError(error);
+			}
+		},
+		postText = async function (url, data, additionalHeaders) {
+			const headers = Object.assign({'content-type': 'text/plain'}, additionalHeaders);
+			try {
+				const response = await axios.post(url, data, {headers});
+				return response.data;
+			} catch (error) {
+				throw extractResponseError(error);
+			}
+		},
+		putFile = function (url, filePath, additionalHeaders) {
+			return sendFile(url, filePath, additionalHeaders, 'put');
+		},
+		getJSON = async function (url, headers) {
+			try {
+				const response = await axios.get(url, {headers});
+				return response.data;
+			} catch (error) {
+				throw extractResponseError(error);
+			}
+		};
+	Object.freeze(Object.assign(this, {downloadToFile, postJSON, putFile, postText, getJSON}));
 };

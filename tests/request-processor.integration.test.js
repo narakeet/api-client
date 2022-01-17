@@ -96,4 +96,37 @@ describe('request processor integration tests', () => {
 		});
 
 	});
+	describe('text-to-speech', () => {
+		test('builds an audio from a local file', async () => {
+			resultFile = path.join(os.tmpdir(), Date.now() + '.m4a');
+			const params = {
+					apiUrl: process.env['API_URL'],
+					apiKey: process.env['API_KEY'],
+					projectType: 'audio',
+					scriptFile: path.resolve(__dirname, 'example', 'video.txt'),
+					outputType: 'm4a',
+					resultFile
+				},
+				result = await requestProcessor.run(params);
+			expect(result.audioUrl).toBeTruthy();
+			expect(result.audioFile).toEqual(resultFile);
+			expect(fs.statSync(resultFile).size).toBeGreaterThan(17220);
+		});
+		test('builds an audio from inline source', async () => {
+			resultFile = path.join(os.tmpdir(), Date.now() + '.mp3');
+			const params = {
+					apiUrl: process.env['API_URL'],
+					apiKey: process.env['API_KEY'],
+					projectType: 'audio',
+					script: 'hi there, how are you?',
+					outputType: 'mp3',
+					resultFile
+				},
+				result = await requestProcessor.run(params);
+			expect(result.audioUrl).toBeTruthy();
+			expect(result.audioFile).toEqual(resultFile);
+			expect(fs.statSync(resultFile).size).toBeGreaterThan(8156);
+		});
+
+	});
 });

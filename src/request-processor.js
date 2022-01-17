@@ -8,11 +8,22 @@ module.exports = function RequestProcessor ({restApi, logger, pollingInterval, a
 	if (!restApi || !logger || !pollingInterval || !apiEndpoint) {
 		throw new Error('invalid-args');
 	}
-	const self = this,
-		startTask = async function (apiKey, event) {
+	const startVideoTask = async function (apiKey, event) {
 			const result = await restApi.postJSON(
 				apiEndpoint + '/video/build',
 				event,
+				{
+					'x-api-key': apiKey
+				}
+			);
+			logger.log('got task id', result.taskId);
+			logger.log('got status URL', result.statusUrl);
+			return result;
+		},
+		startAudioTask = async function (apiKey, source, endpoint) {
+			const result = await restApi.postText(
+				apiEndpoint + '/text-to-speech/' + endpoint,
+				source,
 				{
 					'x-api-key': apiKey
 				}
@@ -43,8 +54,8 @@ module.exports = function RequestProcessor ({restApi, logger, pollingInterval, a
 			logger.log('downloading from', taskResponse.result, 'to', filename);
 			await restApi.downloadToFile(taskResponse.result, filename);
 			return {
-				videoUrl: taskResponse.result,
-				videoFile: filename
+				result: taskResponse.result,
+				filename
 			};
 		},
 		getRequestForLocalZip = async ({apiKey, source, repository}) => {
@@ -74,29 +85,78 @@ module.exports = function RequestProcessor ({restApi, logger, pollingInterval, a
 			} else {
 				throw `unsupported repository type ${repositoryType}`;
 			}
-		};
-	self.run = async function ({apiKey, source, repository, repositoryType, token, sha, resultFile}) {
-		logger.log('executing', {
-			apiEndpoint, apiKey, source, repository, repositoryType, token, sha, resultFile
-		});
-		const event = await getCompilationRequest({
-				source,
-				repository,
-				token,
-				repositoryType,
-				sha,
-				apiKey
-			}),
-			task = await startTask(apiKey, event),
-			taskResponse = await pollForFinished(task.statusUrl, pollingInterval);
-		if (taskResponse.succeeded) {
-			return await saveResults(task, taskResponse, resultFile);
-		} else {
-			if (taskResponse.message) {
-				throw taskResponse.message;
+		},
+		runVideo = async function ({apiKey, source, repository, repositoryType, token, sha, resultFile}) {
+			logger.log('executing', {
+				apiEndpoint, apiKey, source, repository, repositoryType, token, sha, resultFile
+			});
+			const event = await getCompilationRequest({
+					source,
+					repository,
+					token,
+					repositoryType,
+					sha,
+					apiKey
+				}),
+				task = await startVideoTask(apiKey, event, ),
+				taskResponse = await pollForFinished(task.statusUrl, pollingInterval);
+			if (taskResponse.succeeded) {
+				const outcome = await saveResults(task, taskResponse, resultFile);
+				return {
+					videoUrl: outcome.result,
+					videoFile: outcome.filename
+				};
+
+			} else {
+				if (taskResponse.message) {
+					throw taskResponse.message;
+				}
+				throw new Error(JSON.stringify(taskResponse));
 			}
-			throw new Error(JSON.stringify(taskResponse));
-		}
-	};
+		},
+		runAudio = async function ({apiKey, script, scriptFile, voice, outputType, resultFile}) {
+			logger.log('executing', {
+				apiKey, script, scriptFile, outputType, resultFile
+			});
+			if (script && scriptFile) {
+				throw `cannot use both script and script-file options at the same time`;
+			}
+			if (!script && !scriptFile) {
+				throw `please specify either script or script-file must`;
+			}
+			if (!['wav', 'mp3', 'm4a'].includes(outputType)) {
+				throw `unsupported output type ${outputType}`;
+			}
+			const source = script || await fs.promises.readFile(scriptFile, 'utf8'),
+				endpoint = voice ? `${outputType}?voice=${voice}` : outputType,
+				task = await startAudioTask(apiKey, source, endpoint),
+				taskResponse = await pollForFinished(task.statusUrl, pollingInterval);
+			if (taskResponse.succeeded) {
+				const outcome = await saveResults(task, taskResponse, resultFile);
+				return {
+					audioUrl: outcome.result,
+					audioFile: outcome.filename
+				};
+			} else {
+				if (taskResponse.message) {
+					throw taskResponse.message;
+				}
+				throw new Error(JSON.stringify(taskResponse));
+			}
+		},
+		projectTypeRunners = {
+			video: runVideo,
+			audio: runAudio
+		},
+		run = async function(args = {}) {
+			const projectType = args.projectType || 'video',
+				runner = projectTypeRunners[projectType];
+			if (!runner) {
+				throw `unsupported project type ${projectType}`;
+			}
+			return await runner(args);
+		};
+
+	Object.freeze(Object.assign(this, {run}));
 
 };
