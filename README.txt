@@ -127,11 +127,35 @@ Examples:
      --source source.md \
      --repository-type zip-url
 
-  Build an audio MP3 from a local text file:
+  Build an audio WAV from text, saving to result.wav:
 
     narakeet-api-client --api-key $API_KEY \
      --project-type audio \
-     --source script.txt \
+     --script "Hi there" \
+     --output-type wav
+
+  Build an audio WAV from text, using voice Brian, saving to result.wav:
+
+    narakeet-api-client --api-key $API_KEY \
+     --project-type audio \
+     --script "Hi there" \
+     --output-type wav \
+     --voice brian
+
+ Build an audio WAV from text, using voice Brian, saving to brian.wav:
+
+    narakeet-api-client --api-key $API_KEY \
+     --project-type audio \
+     --script "Hi there" \
+     --output-type wav \
+     --voice brian \
+     --output brian.wav
+
+  Build an audio MP3 from a local text file, saving to result.mp3:
+
+    narakeet-api-client --api-key $API_KEY \
+     --project-type audio \
+     --script-file script.txt \
      --output-type mp3
 
   Build an audio WAV from a local text file, using the Rodney
@@ -139,7 +163,7 @@ Examples:
 
     narakeet-api-client --api-key $API_KEY \
      --project-type audio \
-     --source script.txt \
+     --script-file script.txt \
      --output-type wav \
      --voice rodney \
      --output my-script.wav

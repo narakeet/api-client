@@ -20,7 +20,9 @@ const DEFAULT_URL = 'https://api.narakeet.com',
 				'sha': 'github-sha',
 				'resultFile': 'output',
 				'apiKey': 'api-key',
-				'outputType': 'output-type'
+				'outputType': 'output-type',
+				'projectType': 'project-type',
+				'scriptFile': 'script-file'
 			},
 			string: ['api-key', 'repository', 'repository-type', 'github-token', 'github-sha', 'output', 'api-url', 'output-type', 'project-type', 'voice'],
 			boolean: ['verbose'],

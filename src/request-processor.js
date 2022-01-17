@@ -122,7 +122,7 @@ module.exports = function RequestProcessor ({restApi, logger, pollingInterval, a
 				throw `cannot use both script and script-file options at the same time`;
 			}
 			if (!script && !scriptFile) {
-				throw `please specify either script or script-file must`;
+				throw `please specify either script or script-file`;
 			}
 			if (!['wav', 'mp3', 'm4a'].includes(outputType)) {
 				throw `unsupported output type ${outputType}`;
